@@ -1,0 +1,37 @@
+{
+  "name": "vragovr/notification-bundle",
+  "description": "Simple email notifications bundle for Symfony.",
+  "version": "0.0.1",
+  "type": "library",
+  "keywords": [
+    "symfony",
+    "bundle",
+    "swiftmailer",
+    "email"
+  ],
+  "license": "MIT",
+  "require": {
+    "php": ">=5.6",
+    "doctrine/collections": ">=1.4",
+    "symfony/http-kernel": "^3.3",
+    "symfony/dependency-injection": "^3.3",
+    "symfony/config": "^3.3",
+    "symfony/twig-bundle": "^3.3",
+    "twig/twig": "^1.0",
+    "tijsverkoyen/css-to-inline-styles": "^2.0",
+    "symfony/swiftmailer-bundle": "^3.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "NotificationBundle\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "NotificationBundle\\": "tests/"
+    }
+  }
+}

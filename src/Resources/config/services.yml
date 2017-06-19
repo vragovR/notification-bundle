@@ -1,0 +1,7 @@
+services:
+    notification.email:
+        class: NotificationBundle\Service\EmailService
+        arguments:
+            - "@swiftmailer.mailer"
+            - "@templating.engine.twig"
+            - "%notification%"

@@ -108,6 +108,8 @@ class Message
      */
     public function addTo($to)
     {
+        $this->to->clear();
+
         $this->to->add($to);
 
         return $this;
@@ -119,6 +121,8 @@ class Message
      */
     public function setTo(array $listTo)
     {
+        $this->to->clear();
+
         foreach ($listTo as $to) {
             $this->to->add($to);
         }

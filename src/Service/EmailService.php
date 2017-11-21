@@ -209,7 +209,7 @@ class EmailService
         }
 
         foreach ($this->getImages($html) as $match) {
-            $embed = $message->embed(\Swift_Image::fromPath($this->params['template']['image']['path'] . $match[2]));
+            $embed = $message->embed(\Swift_Image::fromPath($this->params['template']['image']['path'] . $match[1]));
             $html = str_replace($match[1], $embed, $html);
         }
 
@@ -222,9 +222,7 @@ class EmailService
      */
     protected function getImages($html)
     {
-        $url = preg_quote($this->params['template']['image']['prefix'], '/');
-
-        preg_match_all("#[\'\"]('{$url}'([^\'\"]+\.(gif|png|jpg|jpeg)?))[\'\"]#ium", $html, $matches, PREG_SET_ORDER);
+        preg_match_all('/src="([^"]*)"/i', $html, $matches, PREG_SET_ORDER);
 
         return $matches;
     }

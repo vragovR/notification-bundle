@@ -2,6 +2,7 @@ services:
     notification.email:
         class: NotificationBundle\Service\EmailService
         arguments:
-            - "@swiftmailer.mailer"
+            - "@swiftmailer.mailer.abstract"
             - "@templating.engine.twig"
+            - Html2Text\Html2Text
             - "%notification%"

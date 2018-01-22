@@ -2,9 +2,9 @@
 
 namespace NotificationBundle\Service;
 
+use Html2Text\Html2Text;
 use NotificationBundle\Exception\HtmlTemplateException;
 use NotificationBundle\Exception\SubjectTemplateException;
-use NotificationBundle\Exception\TxtTemplateException;
 use NotificationBundle\Model\Message;
 use Symfony\Bundle\TwigBundle\TwigEngine;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
@@ -37,6 +37,11 @@ class EmailService
     protected $twig;
 
     /**
+     * @var Html2Text
+     */
+    protected $html2text;
+
+    /**
      * @var array
      */
     protected $params;
@@ -51,15 +56,18 @@ class EmailService
      *
      * @param \Swift_Mailer $mailer
      * @param TwigEngine    $twig
+     * @param Html2Text     $html2Text
      * @param array         $params
      */
     public function __construct(
         \Swift_Mailer $mailer,
         TwigEngine $twig,
+        Html2Text $html2Text,
         array $params
     ) {
         $this->mailer = $mailer;
         $this->twig = $twig;
+        $this->html2text = $html2Text;
         $this->params = $params;
         $this->createMessage();
     }
@@ -140,8 +148,10 @@ class EmailService
             ->setTo($this->message->getTo()->toArray())
             ->setSubject($this->getSubject());
 
-        $message->setBody($this->getHtmlMessage($message), self::TYPE_HTML);
-        $message->addPart($this->getTxtMessage(), self::TYPE_TXT);
+        $this->html2text->setHtml($this->getHtmlMessage($message));
+
+        $message->setBody($this->html2text->getHtml(), self::TYPE_HTML);
+        $message->addPart($this->html2text->getText(), self::TYPE_TXT);
 
         foreach ($this->message->getFiles() as $file) {
             $message->embed($file);
@@ -163,24 +173,6 @@ class EmailService
 
         if (!$this->twig->exists($path)) {
             throw new SubjectTemplateException('Subject template is not exist.');
-        }
-
-        return $this->render($path, $this->message->getParams());
-    }
-
-    /**
-     * @return string
-     */
-    protected function getTxtMessage()
-    {
-        $path = implode('/', [
-            $this->params['template']['path'],
-            $this->message->getTemplate(),
-            $this->params['template']['txt_name'],
-        ]);
-
-        if (!$this->twig->exists($path)) {
-            throw new TxtTemplateException('Txt template is not exist.');
         }
 
         return $this->render($path, $this->message->getParams());
@@ -234,6 +226,12 @@ class EmailService
      */
     protected function render($template, array $params)
     {
-        return $this->twig->render($template, array_merge($params, ['utm_params' => implode('&', $this->params['utm'])]));
+        return $this->twig->render(
+            $template,
+            array_merge(
+                $params,
+                ['utm_params' => implode('&', $this->params['utm'])]
+            )
+        );
     }
 }

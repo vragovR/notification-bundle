@@ -2,8 +2,6 @@
 
 namespace NotificationBundle\Model;
 
-use Doctrine\Common\Collections\ArrayCollection;
-
 /**
  * Class Message
  *
@@ -22,9 +20,9 @@ class Message
     private $replyTo;
 
     /**
-     * @var ArrayCollection
+     * @var array
      */
-    private $to;
+    private $to = [];
 
     /**
      * @var string
@@ -37,29 +35,19 @@ class Message
     private $params;
 
     /**
-     * @var ArrayCollection
+     * @var array
      */
-    private $css;
+    private $css = [];
 
     /**
-     * @var ArrayCollection
+     * @var array
      */
-    private $files;
-
-    /**
-     * Message constructor.
-     */
-    public function __construct()
-    {
-        $this->to = new ArrayCollection();
-        $this->css = new ArrayCollection();
-        $this->files = new ArrayCollection();
-    }
+    private $files = [];
 
     /**
      * @return string
      */
-    public function getFrom()
+    public function getFrom(): string
     {
         return $this->from;
     }
@@ -68,7 +56,7 @@ class Message
      * @param string $from
      * @return $this
      */
-    public function setFrom($from)
+    public function setFrom(string $from): self
     {
         $this->from = $from;
 
@@ -78,7 +66,7 @@ class Message
     /**
      * @return string
      */
-    public function getReplyTo()
+    public function getReplyTo(): string
     {
         return $this->replyTo;
     }
@@ -87,7 +75,7 @@ class Message
      * @param string $replyTo
      * @return $this
      */
-    public function setReplyTo($replyTo)
+    public function setReplyTo(string $replyTo): self
     {
         $this->replyTo = $replyTo;
 
@@ -95,9 +83,9 @@ class Message
     }
 
     /**
-     * @return ArrayCollection
+     * @return array
      */
-    public function getTo()
+    public function getTo(): array
     {
         return $this->to;
     }
@@ -106,77 +94,62 @@ class Message
      * @param string $to
      * @return $this
      */
-    public function addTo($to)
+    public function addTo(string $to): self
     {
-        $this->to->clear();
+        $this->to = [];
 
-        $this->to->add($to);
+        $this->to[] = $to;
 
         return $this;
     }
 
     /**
-     * @param array $listTo
+     * @param array $to
      * @return $this
      */
-    public function setTo(array $listTo)
+    public function setTo(array $to): self
     {
-        $this->to->clear();
+        $this->to = [];
 
-        foreach ($listTo as $to) {
-            $this->to->add($to);
-        }
+        $this->to[] = $to;
 
         return $this;
     }
 
     /**
-     * @return ArrayCollection
+     * @return array
      */
-    public function getCss()
+    public function getCss(): array
     {
         return $this->css;
-    }
-
-    /**
-     * @return string
-     */
-    public function getInlineCss()
-    {
-        $inline = '';
-        foreach ($this->getCss() as $css) {
-            $inline .= file_get_contents($css);
-        }
-
-        return $inline;
     }
 
     /**
      * @param string $css
      * @return $this
      */
-    public function addCss($css)
+    public function addCss(string $css): self
     {
-        $this->css->add($css);
+        $this->css[] = $css;
 
         return $this;
     }
 
     /**
-     * @return ArrayCollection|\Swift_Mime_Attachment[]
+     * @return array
      */
-    public function getFiles()
+    public function getFiles(): array
     {
         return $this->files;
     }
 
     /**
-     * @param \Swift_Mime_Attachment $files
+     * @param \Swift_Mime_Attachment $file
      * @return $this
      */
-    public function addFiles(\Swift_Mime_Attachment $files)
+    public function addFile(\Swift_Mime_Attachment $file): self
     {
-        $this->files->add($files);
+        $this->files[] = $file;
 
         return $this;
     }
@@ -184,7 +157,7 @@ class Message
     /**
      * @return string
      */
-    public function getTemplate()
+    public function getTemplate(): string
     {
         return $this->template;
     }
@@ -192,7 +165,7 @@ class Message
     /**
      * @param string $template
      */
-    public function setTemplate($template)
+    public function setTemplate(string $template)
     {
         $this->template = $template;
     }
@@ -200,7 +173,7 @@ class Message
     /**
      * @return array
      */
-    public function getParams()
+    public function getParams(): array
     {
         return $this->params;
     }
@@ -208,7 +181,7 @@ class Message
     /**
      * @param array $params
      */
-    public function setParams($params)
+    public function setParams(array $params)
     {
         $this->params = $params;
     }

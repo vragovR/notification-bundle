@@ -1,9 +1,9 @@
 <?php
 namespace NotificationBundle\DependencyInjection;
 
-use Symfony\Component\Config\FileLocator;
+use NotificationBundle\Service\EmailService;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
@@ -23,7 +23,27 @@ class NotificationExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('notification', $config);
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
+
+        $this->addClients($config['clients'], $container);
+    }
+
+    /**
+     * @param array            $clients
+     * @param ContainerBuilder $container
+     */
+    protected function addClients(array $clients, ContainerBuilder $container)
+    {
+        foreach ($clients as $name => $config) {
+            $definition = new Definition(EmailService::class, [
+                '$params' => $config,
+            ]);
+
+            $definition->setAutowired(true);
+
+            $container->setDefinition(
+                sprintf('notification.client.%s', $name),
+                $definition
+            );
+        }
     }
 }

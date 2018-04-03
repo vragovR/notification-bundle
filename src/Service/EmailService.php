@@ -2,9 +2,9 @@
 
 namespace NotificationBundle\Service;
 
+use Html2Text\Html2Text;
 use NotificationBundle\Exception\HtmlTemplateException;
 use NotificationBundle\Exception\SubjectTemplateException;
-use NotificationBundle\Exception\TxtTemplateException;
 use NotificationBundle\Model\Message;
 use Symfony\Bundle\TwigBundle\TwigEngine;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
@@ -37,6 +37,16 @@ class EmailService
     protected $twig;
 
     /**
+     * @var Html2Text
+     */
+    protected $html2text;
+
+    /**
+     * @var CssToInlineStyles
+     */
+    private $cssToInlineStyles;
+
+    /**
      * @var array
      */
     protected $params;
@@ -60,6 +70,8 @@ class EmailService
     ) {
         $this->mailer = $mailer;
         $this->twig = $twig;
+        $this->html2text = new Html2Text();
+        $this->cssToInlineStyles = new CssToInlineStyles();
         $this->params = $params;
         $this->createMessage();
     }
@@ -84,11 +96,11 @@ class EmailService
      * @param string|array $email
      * @return $this
      */
-    public function setTo($email)
+    public function setTo($email): self
     {
-        if (is_string($email)) {
+        if (\is_string($email)) {
             $this->message->addTo($email);
-        } elseif (is_array($email)) {
+        } elseif (\is_array($email)) {
             $this->message->setTo($email);
         }
 
@@ -100,7 +112,7 @@ class EmailService
      * @param array  $params
      * @return $this
      */
-    public function setTemplate($template, array $params)
+    public function setTemplate(string $template, array $params): self
     {
         $this->message->setTemplate($template);
         $this->message->setParams($params);
@@ -112,9 +124,9 @@ class EmailService
      * @param \Swift_Mime_Attachment $attachment
      * @return $this
      */
-    public function addAttach(\Swift_Mime_Attachment $attachment)
+    public function addAttach(\Swift_Mime_Attachment $attachment): self
     {
-        $this->message->addFiles($attachment);
+        $this->message->addFile($attachment);
 
         return $this;
     }
@@ -122,7 +134,7 @@ class EmailService
     /**
      * @return int
      */
-    public function send()
+    public function send(): int
     {
         return $this->mailer->send($this->getMessage());
     }
@@ -130,18 +142,20 @@ class EmailService
     /**
      * @return \Swift_Message $message
      */
-    protected function getMessage()
+    protected function getMessage(): \Swift_Message
     {
         /** @var \Swift_Message $message */
         $message = $this
             ->mailer
             ->createMessage()
             ->setFrom($this->message->getFrom())
-            ->setTo($this->message->getTo()->toArray())
+            ->setTo($this->message->getTo())
             ->setSubject($this->getSubject());
 
-        $message->setBody($this->getHtmlMessage($message), self::TYPE_HTML);
-        $message->addPart($this->getTxtMessage(), self::TYPE_TXT);
+        $this->html2text->setHtml($this->getHtmlMessage($message));
+
+        $message->setBody($this->html2text->getHtml(), self::TYPE_HTML);
+        $message->addPart(trim($this->html2text->getText()), self::TYPE_TXT);
 
         foreach ($this->message->getFiles() as $file) {
             $message->embed($file);
@@ -153,7 +167,7 @@ class EmailService
     /**
      * @return string
      */
-    protected function getSubject()
+    protected function getSubject(): string
     {
         $path = implode('/', [
             $this->params['template']['path'],
@@ -169,28 +183,10 @@ class EmailService
     }
 
     /**
-     * @return string
-     */
-    protected function getTxtMessage()
-    {
-        $path = implode('/', [
-            $this->params['template']['path'],
-            $this->message->getTemplate(),
-            $this->params['template']['txt_name'],
-        ]);
-
-        if (!$this->twig->exists($path)) {
-            throw new TxtTemplateException('Txt template is not exist.');
-        }
-
-        return $this->render($path, $this->message->getParams());
-    }
-
-    /**
      * @param \Swift_Message $message
      * @return string
      */
-    protected function getHtmlMessage(\Swift_Message $message)
+    protected function getHtmlMessage(\Swift_Message $message): string
     {
         $path = implode('/', [
             $this->params['template']['path'],
@@ -205,7 +201,7 @@ class EmailService
         $html = $this->render($path, $this->message->getParams());
 
         if ($this->message->getCss()) {
-            $html = (new CssToInlineStyles())->convert($html, $this->message->getInlineCss());
+            $html = $this->cssToInlineStyles->convert($html, $this->getInlineStyles($this->message->getCss()));
         }
 
         foreach ($this->getImages($html) as $match) {
@@ -220,7 +216,7 @@ class EmailService
      * @param string $html
      * @return array
      */
-    protected function getImages($html)
+    protected function getImages(string $html): array
     {
         preg_match_all('/src="([^"]*)"/i', $html, $matches, PREG_SET_ORDER);
 
@@ -228,12 +224,32 @@ class EmailService
     }
 
     /**
+     * @param array $cssList
+     * @return string
+     */
+    protected function getInlineStyles(array $cssList): string
+    {
+        $inline = '';
+        foreach ($cssList as $css) {
+            $inline .= file_get_contents($css);
+        }
+
+        return $inline;
+    }
+
+    /**
      * @param string $template
      * @param array  $params
      * @return string
      */
-    protected function render($template, array $params)
+    protected function render($template, array $params): string
     {
-        return $this->twig->render($template, array_merge($params, ['utm_params' => implode('&', $this->params['utm'])]));
+        return $this->twig->render(
+            $template,
+            array_merge(
+                $params,
+                ['utm_params' => implode('&', $this->params['utm'])]
+            )
+        );
     }
 }

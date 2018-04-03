@@ -1,7 +1,7 @@
 {
   "name": "vragovr/notification-bundle",
   "description": "Simple email notifications bundle for Symfony.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "library",
   "keywords": [
     "symfony",

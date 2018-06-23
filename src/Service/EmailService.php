@@ -7,6 +7,7 @@ use NotificationBundle\Exception\HtmlTemplateException;
 use NotificationBundle\Exception\SubjectTemplateException;
 use NotificationBundle\Model\Message;
 use Symfony\Bundle\TwigBundle\TwigEngine;
+use Symfony\Component\Templating\EngineInterface;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 /**
@@ -32,9 +33,9 @@ class EmailService
     protected $mailer;
 
     /**
-     * @var TwigEngine
+     * @var EngineInterface 
      */
-    protected $twig;
+    protected $templateEngine;
 
     /**
      * @var Html2Text
@@ -60,16 +61,16 @@ class EmailService
      * EmailService constructor.
      *
      * @param \Swift_Mailer $mailer
-     * @param TwigEngine    $twig
+     * @param TwigEngine    $templateEngine
      * @param array         $params
      */
     public function __construct(
         \Swift_Mailer $mailer,
-        TwigEngine $twig,
+        EngineInterface $templateEngine,
         array $params
     ) {
         $this->mailer = $mailer;
-        $this->twig = $twig;
+        $this->templateEngine = $templateEngine;
         $this->html2text = new Html2Text();
         $this->cssToInlineStyles = new CssToInlineStyles();
         $this->params = $params;
@@ -175,7 +176,7 @@ class EmailService
             $this->params['template']['subject_name'],
         ]);
 
-        if (!$this->twig->exists($path)) {
+        if (!$this->templateEngine->exists($path)) {
             throw new SubjectTemplateException('Subject template is not exist.');
         }
 
@@ -194,7 +195,7 @@ class EmailService
             $this->params['template']['html_name'],
         ]);
 
-        if (!$this->twig->exists($path)) {
+        if (!$this->templateEngine->exists($path)) {
             throw new HtmlTemplateException('HTML template is not exist.');
         }
 
@@ -244,7 +245,7 @@ class EmailService
      */
     protected function render($template, array $params): string
     {
-        return $this->twig->render(
+        return $this->templateEngine->render(
             $template,
             array_merge(
                 $params,
